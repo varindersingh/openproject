@@ -746,6 +746,7 @@ Timeline = {
     };
 
     DataEnhancer.prototype.setElement = function (type, id, element) {
+      /* jshint boss: true */
       return this.data[type.identifier][id] = element;
     };
 
@@ -3087,6 +3088,7 @@ Timeline = {
       return this;
     },
     appendChild: function(node) {
+      /* jshint boss: true */
       if (!this.childNodes) {
         this.childNodes = [node];
       } else {
@@ -3120,6 +3122,7 @@ Timeline = {
       return this.expanded;
     },
     setExpand: function(state) {
+      /* jshint boss: true */
       return this.expanded = state;
     },
     expand: function() {
