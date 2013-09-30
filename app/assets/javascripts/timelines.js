@@ -305,7 +305,7 @@ Timeline = {
         timeline.reload();
       });
 
-      timelineLoader = this.provideTimelineLoader()
+      timelineLoader = this.provideTimelineLoader();
 
       jQuery(timelineLoader).on('complete', jQuery.proxy(function(e, data) {
         jQuery.extend(this, data);
@@ -330,7 +330,7 @@ Timeline = {
   reload: function() {
     delete this.lefthandTree;
 
-    var timelineLoader = this.provideTimelineLoader()
+    var timelineLoader = this.provideTimelineLoader();
 
     jQuery(timelineLoader).on('complete', jQuery.proxy(function (e, data) {
 
@@ -943,7 +943,7 @@ Timeline = {
         var pe = dataEnhancer.getElement(Timeline.PlanningElement, e.id);
         var pet = pe.getPlanningElementType();
 
-        pe.vertical = this.timeline.verticalPlanningElementIds().indexOf(pe.id) != -1;
+        pe.vertical = this.timeline.verticalPlanningElementIds().indexOf(pe.id) !== -1;
         //this.timeline.optionsfalse || Math.random() < 0.5 || (pet && pet.is_milestone);
       });
     };
@@ -1057,7 +1057,7 @@ Timeline = {
 
       this.loader.register(Timeline.Reporting.identifier,
                            { url : url });
-    },
+    };
 
     TimelineLoader.prototype.registerGlobalElements = function () {
 
@@ -2793,6 +2793,8 @@ Timeline = {
       var has_one_date = this.hasOneDate();
       var has_start_date = this.hasStartDate();
 
+      var hoverElement;
+
       color = this.getColor();
 
       if (has_one_date) {
@@ -2809,7 +2811,7 @@ Timeline = {
             'stroke-dasharray': '- '
           });
 
-          var hoverElement = paper.rect(
+          hoverElement = paper.rect(
             left + scale.day / 2 - 2 * Timeline.HOVER_THRESHOLD,
             timeline.decoHeight(), // 8px margin-top
             4 * Timeline.HOVER_THRESHOLD,
@@ -2832,7 +2834,7 @@ Timeline = {
             'opacity': 0.2
           });
 
-          var hoverElement = paper.rect(
+          hoverElement = paper.rect(
             left - Timeline.HOVER_THRESHOLD,
             timeline.decoHeight(), // 8px margin-top
             width + 2 * Timeline.HOVER_THRESHOLD,
@@ -4544,7 +4546,7 @@ Timeline = {
   getRelativeVerticalBottomOffset: function(offset) {
     var result;
     result = this.getRelativeVerticalOffset(offset);
-    if (offset.find("div").length == 1) {
+    if (offset.find("div").length === 1) {
       result -= jQuery(offset.find("div")[0]).height();
     }
     if (offset !== undefined)
