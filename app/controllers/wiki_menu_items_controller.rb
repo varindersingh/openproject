@@ -42,7 +42,7 @@ class WikiMenuItemsController < ApplicationController
   end
 
   def update
-    wiki_menu_setting = params[:wiki_menu_item][:setting]
+    wiki_menu_setting = params[:menu_items_wiki_menu_item][:setting]
     parent_wiki_menu_item = params[:parent_wiki_menu_item]
 
     get_data_from_params(params)
@@ -50,8 +50,8 @@ class WikiMenuItemsController < ApplicationController
     if wiki_menu_setting == 'no_item'
       @wiki_menu_item.destroy unless @wiki_menu_item.nil?
     else
-      @wiki_menu_item.wiki_id = @page.wiki.id
-      @wiki_menu_item.name = params[:wiki_menu_item][:name]
+      @wiki_menu_item.navigatable_id = @page.wiki.id
+      @wiki_menu_item.name = params[:menu_items_wiki_menu_item][:name]
       @wiki_menu_item.title = @page_title
 
       if wiki_menu_setting == 'sub_item'
@@ -59,15 +59,15 @@ class WikiMenuItemsController < ApplicationController
       elsif wiki_menu_setting == 'main_item'
         @wiki_menu_item.parent_id = nil
 
-        if params[:wiki_menu_item][:new_wiki_page] == "1"
+        if params[:menu_items_wiki_menu_item][:new_wiki_page] == "1"
           @wiki_menu_item.new_wiki_page = true
-        elsif params[:wiki_menu_item][:new_wiki_page] == "0"
+        elsif params[:menu_items_wiki_menu_item][:new_wiki_page] == "0"
           @wiki_menu_item.new_wiki_page = false
         end
 
-        if params[:wiki_menu_item][:index_page] == "1"
+        if params[:menu_items_wiki_menu_item][:index_page] == "1"
           @wiki_menu_item.index_page = true
-        elsif params[:wiki_menu_item][:index_page] == "0"
+        elsif params[:menu_items_wiki_menu_item][:index_page] == "0"
           @wiki_menu_item.index_page = false
         end
       end
@@ -92,9 +92,9 @@ class WikiMenuItemsController < ApplicationController
     @page = WikiPage.find_by_title_and_wiki_id(@page_title, @project.wiki.id)
 
 
-    @wiki_menu_item = WikiMenuItem.find_or_initialize_by_wiki_id_and_title(@page.wiki.id, @page_title)
+    @wiki_menu_item = MenuItems::WikiMenuItem.find_or_initialize_by_navigatable_id_and_title(@page.wiki.id, @page_title)
 
-    @possible_parent_menu_items = WikiMenuItem.main_items(@page.wiki.id) - [@wiki_menu_item]
+    @possible_parent_menu_items = MenuItems::WikiMenuItem.main_items(@page.wiki.id) - [@wiki_menu_item]
     @possible_parent_menu_items.map! {|item| [item.name, item.id]}
   end
 end
