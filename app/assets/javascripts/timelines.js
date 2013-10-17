@@ -1184,10 +1184,11 @@ Timeline = {
         );
 
         // load historical planning elements.
+        // TODO: load historical PEs here!
         if (this.options.target_time) {
           this.loader.register(
             Timeline.HistoricalPlanningElement.identifier + '_IDS_' + i,
-            { url : planningElementPrefix +
+            { url : projectPrefix +
                     '/planning_elements.json?ids=' +
                     planningElementIdsOfPacket.join(',') },
             { storeIn: Timeline.HistoricalPlanningElement.identifier,
