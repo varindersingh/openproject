@@ -471,7 +471,7 @@ Timeline = {
 
     FilterQueryStringBuilder.prototype.prepareAdditionalQueryData = function(key, value) {
       this.queryStringParts.push({name: key, value: value});
-    }
+    };
 
     FilterQueryStringBuilder.prototype.prepareFilterDataForKeyAndArrayOfValues = function(key, value) {
       jQuery.each(value, jQuery.proxy( function(i, e) {
@@ -1834,7 +1834,7 @@ Timeline = {
           dc = -1;
         }
 
-        identifier_methods = [a, b].map(function(e) { return e.hasOwnProperty("subject") ? "subject" : "name" })
+        var identifier_methods = [a, b].map(function(e) { return e.hasOwnProperty("subject") ? "subject" : "name"; });
 
         if (!a.identifierLower) {
           a.identifierLower = a[identifier_methods[0]].toLowerCase();
