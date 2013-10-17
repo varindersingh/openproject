@@ -41,16 +41,6 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_select "#main-menu", :count => 0
   end
 
-  test "browsing to an unauthorized page should render the base layout" do
-    change_user_password('miscuser9', 'testTestTest!')
-
-    log_user('miscuser9','testTestTest!')
-
-    get "/admin"
-    assert_response :forbidden
-    assert_select "#main-menu", :count => 0
-  end
-
   def test_top_menu_navigation_not_visible_when_login_required
     with_settings :login_required => '1' do
       get '/'

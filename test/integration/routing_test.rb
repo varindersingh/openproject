@@ -147,18 +147,8 @@ class RoutingTest < ActionDispatch::IntegrationTest
                                                       :format => 'xml')
 
     # Extra actions
-    should route(:get, "/issues/context_menu").to( :controller => 'issues/context_menus',
-                                                   :action => 'issues')
-    should route(:post, "/issues/context_menu").to( :controller => 'issues/context_menus',
-                                                    :action => 'issues')
-
     should route(:get, "/issues/changes").to( :controller => 'journals',
                                               :action => 'index')
-
-    should route(:get, "/issues/bulk_edit").to( :controller => 'issues',
-                                                :action => 'bulk_edit')
-    should route(:put, "/issues/bulk_update").to( :controller => 'issues',
-                                                  :action => 'bulk_update')
   end
 
 
@@ -224,43 +214,6 @@ class RoutingTest < ActionDispatch::IntegrationTest
                                                              :action => 'diff',
                                                              :id => '100',
                                                              :field => 'description' )
-  end
-
-  context "issue categories" do
-    context "project scoped" do
-      should route(:get, "/projects/test/issue_categories/new").to( :controller => 'issue_categories',
-                                                                    :action => 'new',
-                                                                    :project_id => 'test' )
-
-      should route(:post, "/projects/test/issue_categories").to( :controller => 'issue_categories',
-                                                                 :action => 'create',
-                                                                 :project_id => 'test' )
-
-      should route(:get, "/issue_categories/5/edit").to( :controller => 'issue_categories',
-                                                         :action => 'edit',
-                                                         :id => '5' )
-
-      should route(:put, "/issue_categories/5").to( :controller => 'issue_categories',
-                                                    :action => 'update',
-                                                    :id => '5' )
-
-      should route(:delete, "/issue_categories/5").to( :controller => 'issue_categories',
-                                                       :action => 'destroy',
-                                                       :id => '5' )
-    end
-  end
-
-  context "issue reports" do
-    context "issue_scoped" do
-      should route(:get, "/projects/567/issues/report").to( :controller => 'issues/reports',
-                                                            :action => 'report',
-                                                            :project_id => '567' )
-
-      should route(:get, "/projects/567/issues/report/assigned_to").to( :controller => 'issues/reports',
-                                                                        :action => 'report_details',
-                                                                        :project_id => '567',
-                                                                        :detail => 'assigned_to' )
-    end
   end
 
   context "members" do

@@ -40,6 +40,7 @@ class WorkPackagesController < ApplicationController
 
   accept_key_auth :index, :show, :create, :update, :destroy
 
+  before_filter :find_work_packages, :only => [:destroy]
   before_filter :disable_api
   before_filter :not_found_unless_work_package,
                 :project,
@@ -133,7 +134,7 @@ class WorkPackagesController < ApplicationController
       Attachment.attach_files(work_package, params[:attachments])
       render_attachment_warning_if_needed(work_package)
 
-      call_hook(:controller_work_pacakge_new_after_save, { :params => params, :work_package => work_package })
+      call_hook(:controller_work_package_new_after_save, { :params => params, :work_package => work_package })
 
       redirect_to(work_package_path(work_package))
     else
@@ -397,7 +398,18 @@ class WorkPackagesController < ApplicationController
   end
 
   def time_entry
-    work_package.add_time_entry
+    attributes = {}
+    permitted = {}
+
+    if params[:work_package]
+      permitted = permitted_params.update_work_package(:project => project)
+    end
+
+    if permitted.has_key?("time_entry")
+      attributes = permitted["time_entry"]
+    end
+
+    work_package.add_time_entry(attributes)
   end
 
   protected

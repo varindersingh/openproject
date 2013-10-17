@@ -40,7 +40,7 @@ class ProjectsController < ApplicationController
 
   before_filter :disable_api
   before_filter :find_project, :except => [ :index, :level_list, :new, :create, :copy ]
-  before_filter :authorize, :only => [ :show, :settings, :edit, :update, :modules ]
+  before_filter :authorize, :only => [ :show, :settings, :edit, :update, :modules, :types ]
   before_filter :authorize_global, :only => [:new, :create]
   before_filter :require_admin, :only => [ :copy, :archive, :unarchive, :destroy ]
   before_filter :jump_to_project_menu_item, :only => :show
@@ -60,17 +60,6 @@ class ProjectsController < ApplicationController
   include QueriesHelper
   include RepositoriesHelper
   include ProjectsHelper
-
-  # for timelines
-  def planning_element_types
-    params[:project].assert_valid_keys("planning_element_type_ids")
-    if @project.update_attributes(params[:project])
-      flash[:notice] = l('notice_successful_update')
-    else
-      flash[:error] = l('timelines.cannot_update_planning_element_types')
-    end
-    redirect_to :action => "settings", :tab => "timelines"
-  end
 
   # Lists visible projects
   def index
@@ -163,7 +152,7 @@ class ProjectsController < ApplicationController
 
     @open_issues_by_type = WorkPackage.visible.count(:group => :type,
                                             :include => [:project, :status, :type],
-                                            :conditions => ["(#{cond}) AND #{IssueStatus.table_name}.is_closed=?", false])
+                                            :conditions => ["(#{cond}) AND #{Status.table_name}.is_closed=?", false])
     @total_issues_by_type = WorkPackage.visible.count(:group => :type,
                                             :include => [:project, :status, :type],
                                             :conditions => cond)
@@ -201,6 +190,30 @@ class ProjectsController < ApplicationController
         }
       end
     end
+  end
+
+  def types
+    flash[:notice] = []
+
+    unless params.has_key? :project
+      params[:project] = { "type_ids" => [Type.standard_type.id] }
+      flash[:notice] << l(:notice_automatic_set_of_standard_type)
+    end
+
+    params[:project].assert_valid_keys("type_ids")
+
+    selected_type_ids = params[:project][:type_ids].map { |t| t.to_i }
+
+    if types_missing?(selected_type_ids)
+      flash.delete :notice
+      flash[:error] = I18n.t(:error_types_in_use_by_work_packages,
+                             types: missing_types(selected_type_ids).collect(&:name).join(", "))
+    elsif @project.update_attributes(params[:project])
+      flash[:notice] << l('notice_successful_update')
+    else
+      flash[:error] = l('timelines.cannot_update_planning_element_types')
+    end
+    redirect_to :action => "settings", :tab => "types"
   end
 
   def modules
@@ -273,7 +286,7 @@ private
 
   def load_project_settings
     @issue_custom_fields = WorkPackageCustomField.find(:all, :order => "#{CustomField.table_name}.position")
-    @issue_category ||= IssueCategory.new
+    @category ||= Category.new
     @member ||= @project.members.new
     @types = Type.all
     @repository ||= @project.repository
@@ -305,4 +318,17 @@ private
     end
   end
 
+  def types_missing?(selected_type_ids)
+    !missing_types(selected_type_ids).empty?
+  end
+
+  def missing_types(selected_type_ids)
+    types_used_by_work_packages.select { |t| !selected_type_ids.include?(t.id) }
+  end
+
+  def types_used_by_work_packages
+    @types_used_by_work_packages ||= Type.find_all_by_id(WorkPackage.where(project_id: @project.id)
+                                                                    .select(:type_id)
+                                                                    .uniq)
+  end
 end

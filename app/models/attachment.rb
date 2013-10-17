@@ -48,11 +48,12 @@ class Attachment < ActiveRecord::Base
   acts_as_journalized :event_title => :filename,
        :event_url => (Proc.new do |o|
          { :controller => '/attachments', :action => 'download',
-           :id => o.journaled_id, :filename => o.filename }
+           :id => o.journable_id, :filename => o.filename }
        end), :acts_as_activity => false
 
   cattr_accessor :storage_path
-  @@storage_path = Redmine::Configuration['attachments_storage_path'] || Rails.root.join('files').to_s
+  @@storage_path = OpenProject::Configuration['attachments_storage_path'] ||
+                   Rails.root.join('files').to_s
 
   def filesize_below_allowed_maximum
     if self.filesize > Setting.attachment_max_size.to_i.kilobytes

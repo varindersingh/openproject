@@ -181,7 +181,7 @@ Given /^the [Uu]ser "([^\"]*)" has 1 time [eE]ntry$/ do |user|
   u = User.find_by_login user
   p = u.projects.last
   raise "This user must be member of a project to have issues" unless p
-  i = WorkPackage.generate_for_project!(p)
+  i = FactoryGirl.create(:work_package, project: p)
   t = TimeEntry.generate
   t.user = u
   t.issue = i
@@ -195,7 +195,7 @@ Given /^the [Uu]ser "([^\"]*)" has 1 time entry with (\d+\.?\d*) hours? at the p
   p = Project.find_by_name(project) || Project.find_by_identifier(project)
   as_admin do
     t = TimeEntry.generate
-    i = WorkPackage.generate_for_project!(p)
+    i = FactoryGirl.create(:work_package, project: p)
     t.project = p
     t.issue = i
     t.hours = hours.to_f
@@ -211,7 +211,7 @@ Given /^the [Pp]roject "([^\"]*)" has (\d+) [tT]ime(?: )?[eE]ntr(?:ies|y) with t
   p = Project.find_by_name(project) || Project.find_by_identifier(project)
   as_admin count do
     t = TimeEntry.generate
-    i = WorkPackage.generate_for_project!(p)
+    i = FactoryGirl.create(:work_package, project: p)
     t.project = p
     t.work_package = i
     t.activity.project = p
@@ -267,8 +267,8 @@ end
 Given /^there are the following issue status:$/ do |table|
 
   table.hashes.each_with_index do |t, i|
-    status = IssueStatus.find_by_name(t['name'])
-    status = IssueStatus.new :name => t['name'] if status.nil?
+    status = Status.find_by_name(t['name'])
+    status = Status.new :name => t['name'] if status.nil?
     status.is_closed = t['is_closed'] == 'true' ? true : false
     status.is_default = t['is_default'] == 'true' ? true : false
     status.position = t['position'] ? t['position'] : i
@@ -282,7 +282,7 @@ Given /^the type "(.+?)" has the default workflow for the role "(.+?)"$/ do |typ
   type = Type.find_by_name(type_name)
   type.workflows = []
 
-  IssueStatus.all(:order => "id ASC").collect(&:id).combination(2).each do |c|
+  Status.all(:order => "id ASC").collect(&:id).combination(2).each do |c|
     type.workflows.build(:old_status_id => c[0], :new_status_id => c[1], :role => role)
   end
   type.save!
@@ -343,6 +343,12 @@ When /^(?:|I )login as (.+?)(?: with password (.+))?$/ do |username, password|
   username = username.gsub("\"", "")
   password = password.nil? ? "adminADMIN!" : password.gsub("\"", "")
   login(username, password)
+end
+
+When /^(?:|I )login with autologin enabled as (.+?)(?: with password (.+))?$/ do |username, password|
+  username = username.gsub("\"", "")
+  password = password.nil? ? "adminADMIN!" : password.gsub("\"", "")
+  page.driver.post signin_path(:username => username, :password => password, :autologin => 1)
 end
 
 When "I logout" do

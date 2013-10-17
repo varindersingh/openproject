@@ -290,8 +290,7 @@ Timeline = {
 
       // prerequisites (3rd party libs)
       this.checkPrerequisites();
-
-      this.modalHelper = new ModalHelper();
+      this.modalHelper = modalHelperInstance;
       this.modalHelper.setupTimeline(
         this,
         {
@@ -353,22 +352,24 @@ Timeline = {
     return new Timeline.TimelineLoader(
       this,
       {
-        api_prefix                : this.options.api_prefix,
-        url_prefix                : this.options.url_prefix,
-        project_prefix            : this.options.project_prefix,
-        planning_element_prefix   : this.options.planning_element_prefix,
-        project_id                : this.options.project_id,
-        project_types             : this.options.project_types,
-        project_statuses          : this.options.project_status,
-        project_responsibles      : this.options.project_responsibles,
-        project_parents           : this.options.parents,
-        planning_element_types    : this.options.planning_element_types,
-        grouping_one              : (this.options.grouping_one_enabled ? this.options.grouping_one_selection : undefined),
-        grouping_two              : (this.options.grouping_two_enabled ? this.options.grouping_two_selection : undefined),
-        ajax_defaults             : this.ajax_defaults,
-        current_time              : this.comparisonCurrentTime(),
-        target_time               : this.comparisonTarget(),
-        include_planning_elements : this.verticalPlanningElementIds()
+        api_prefix                    : this.options.api_prefix,
+        url_prefix                    : this.options.url_prefix,
+        project_prefix                : this.options.project_prefix,
+        planning_element_prefix       : this.options.planning_element_prefix,
+        project_id                    : this.options.project_id,
+        project_types                 : this.options.project_types,
+        project_statuses              : this.options.project_status,
+        project_responsibles          : this.options.project_responsibles,
+        project_parents               : this.options.parents,
+        planning_element_types        : this.options.planning_element_types,
+        planning_element_responsibles : this.options.planning_element_responsibles,
+        planning_element_status       : this.options.planning_element_status,
+        grouping_one                  : (this.options.grouping_one_enabled ? this.options.grouping_one_selection : undefined),
+        grouping_two                  : (this.options.grouping_two_enabled ? this.options.grouping_two_selection : undefined),
+        ajax_defaults                 : this.ajax_defaults,
+        current_time                  : this.comparisonCurrentTime(),
+        target_time                   : this.comparisonTarget(),
+        include_planning_elements     : this.verticalPlanningElementIds()
       }
     );
   },
@@ -427,7 +428,8 @@ Timeline = {
      * Simple serializer of query strings that satisfies OpenProject's filter
      * API. Transforms hashes of desired filterings into the proper query strings.
      *
-     * Example:
+     * Examples:
+     *
      *   fqsb = (new FilterQueryStringBuilder({
      *     'type_id': [4, 5]
      *   })).build(
@@ -436,27 +438,44 @@ Timeline = {
      *
      *   => /api/v2/projects/sample_project/planning_elements.json?f[]=type_id&op[type_id]==&v[type_id][]=4&v[type_id][]=5
      *
+     *   fqsb = (new FilterQueryStringBuilder())
+     *     .filter({ 'type_id': [4, 5] })
+     *     .append({ 'at_time': 1380795754 })
+     *     .build( '/api/v2/projects/sample_project/planning_elements.json' );
+     *
+     *   => /api/v2/projects/sample_project/planning_elements.json?f[]=type_id&op[type_id]==&v[type_id][]=4&v[type_id][]=5&at_time=1380795754
      */
     var FilterQueryStringBuilder = function (filterHash) {
-      this.filterHash = filterHash;
+      this.filterHash = filterHash || {};
+      this.paramsHash = {};
+    };
+
+    FilterQueryStringBuilder.prototype.filter = function(filters) {
+      this.filterHash = jQuery.extend({}, this.filterHash, filters);
+      return this;
+    };
+
+    FilterQueryStringBuilder.prototype.append = function(addition) {
+      this.paramsHash = jQuery.extend({}, this.paramsHash, addition);
+      return this;
     };
 
     FilterQueryStringBuilder.prototype.buildMetaDataForKey = function(key) {
-      this.queryStringParts.push(
-        {name: 'f[]', value: key},
-        {name: 'op[' + key + ']', value: '='}
-      );
+      this.queryStringParts.push({name: 'f[]', value: key},
+                                 {name: 'op[' + key + ']', value: '='});
     };
 
-    FilterQueryStringBuilder.prototype.buildFilterDataForKeyAndValue = function(key, value) {
-      this.queryStringParts.push(
-        {name: 'v[' + key + '][]', value: value}
-      );
+    FilterQueryStringBuilder.prototype.prepareFilterDataForKeyAndValue = function(key, value) {
+      this.queryStringParts.push({name: 'v[' + key + '][]', value: value});
     };
 
-    FilterQueryStringBuilder.prototype.buildFilterDataForKeyAndArrayOfValues = function(key, value) {
+    FilterQueryStringBuilder.prototype.prepareAdditionalQueryData = function(key, value) {
+      this.queryStringParts.push({name: key, value: value});
+    }
+
+    FilterQueryStringBuilder.prototype.prepareFilterDataForKeyAndArrayOfValues = function(key, value) {
       jQuery.each(value, jQuery.proxy( function(i, e) {
-         this.buildFilterDataForKeyAndValue(key, e);
+         this.prepareFilterDataForKeyAndValue(key, e);
       }, this));
     };
 
@@ -473,9 +492,10 @@ Timeline = {
       this.buildFilterDataForValue(key, value);
     };
 
-    FilterQueryStringBuilder.prototype.buildQueryStringParts = function() {
+    FilterQueryStringBuilder.prototype.prepareQueryStringParts = function() {
       this.queryStringParts = [];
       jQuery.each(this.filterHash, jQuery.proxy(this.registerKeyAndValue, this));
+      jQuery.each(this.paramsHash, jQuery.proxy(this.prepareAdditionalQueryData, this));
     };
 
     FilterQueryStringBuilder.prototype.buildQueryStringFromQueryStringParts = function(url) {
@@ -492,7 +512,7 @@ Timeline = {
     };
 
     FilterQueryStringBuilder.prototype.build = function(url) {
-      this.buildQueryStringParts();
+      this.prepareQueryStringParts();
       return this.buildUrlFromQueryStringParts(url);
     };
 
@@ -882,7 +902,7 @@ Timeline = {
         }
 
         pe.alternate_start_date = e.start_date;
-        pe.alternate_end_date = e.end_date;
+        pe.alternate_due_date = e.due_date;
       });
 
       dataEnhancer.setElementMap(Timeline.HistoricalPlanningElement, undefined);
@@ -1089,12 +1109,30 @@ Timeline = {
       });
     };
 
-    TimelineLoader.prototype.provideServerSideFilterHash = function() {
+    TimelineLoader.prototype.provideServerSideFilterHashTypes = function (hash) {
       if (this.options.planning_element_types !== undefined) {
-        return {"type_id": this.options.planning_element_types};
-      } else {
-        return {};
+        hash.type_id = this.options.planning_element_types;
       }
+    };
+
+    TimelineLoader.prototype.provideServerSideFilterHashStatus = function (hash) {
+      if (this.options.planning_element_status !== undefined) {
+        hash.status_id = this.options.planning_element_status;
+      }
+    };
+
+    TimelineLoader.prototype.provideServerSideFilterHashResponsibles = function (hash) {
+      if (this.options.planning_element_responsibles !== undefined) {
+        hash.responsible_id = this.options.planning_element_responsibles;
+      }
+    };
+
+    TimelineLoader.prototype.provideServerSideFilterHash = function() {
+      var result = {};
+      this.provideServerSideFilterHashTypes(result);
+      this.provideServerSideFilterHashResponsibles(result);
+      this.provideServerSideFilterHashStatus(result);
+      return result;
     };
 
     TimelineLoader.prototype.registerPlanningElements = function (ids) {
@@ -1109,28 +1147,23 @@ Timeline = {
         var qsb = new Timeline.FilterQueryStringBuilder(
           this.provideServerSideFilterHash());
 
-        var url = qsb.build(projectPrefix + '/planning_elements.json');
-
         // load current planning elements.
         this.loader.register(
-            Timeline.PlanningElement.identifier + '_' + i,
-            { url : url },
-            { storeIn: Timeline.PlanningElement.identifier }
-          );
+          Timeline.PlanningElement.identifier + '_' + i,
+          { url : qsb.build(projectPrefix + '/planning_elements.json') },
+          { storeIn: Timeline.PlanningElement.identifier }
+        );
 
-        /* TODO!
         // load historical planning elements.
         if (this.options.target_time) {
           this.loader.register(
-              Timeline.HistoricalPlanningElement.identifier + '_' + i,
-              { url : projectPrefix +
-                      '/planning_elements.json' +
-                      this.comparisonTargetUrlSuffix() },
-              { storeIn: Timeline.HistoricalPlanningElement.identifier,
-                readFrom: Timeline.PlanningElement.identifier }
-            );
+            Timeline.HistoricalPlanningElement.identifier + '_' + i,
+            { url : qsb.append({ at_time: this.options.target_time })
+                       .build(projectPrefix + '/planning_elements.json') },
+            { storeIn: Timeline.HistoricalPlanningElement.identifier,
+              readFrom: Timeline.PlanningElement.identifier }
+          );
         }
-        */
       });
     };
 
@@ -1143,26 +1176,24 @@ Timeline = {
 
         // load current planning elements.
         this.loader.register(
-            Timeline.PlanningElement.identifier + '_IDS_' + i,
-            { url : projectPrefix +
-                    '/planning_elements.json?ids=' +
-                    planningElementIdsOfPacket.join(',')},
-            { storeIn: Timeline.PlanningElement.identifier }
-          );
+          Timeline.PlanningElement.identifier + '_IDS_' + i,
+          { url : projectPrefix +
+                  '/planning_elements.json?ids=' +
+                  planningElementIdsOfPacket.join(',')},
+          { storeIn: Timeline.PlanningElement.identifier }
+        );
 
-        /* TODO!
         // load historical planning elements.
         if (this.options.target_time) {
           this.loader.register(
-              Timeline.HistoricalPlanningElement.identifier + '_IDS_' + i,
-              { url : planningElementPrefix +
-                      '/planning_elements.json?ids=' +
-                      planningElementIdsOfPacket.join(',') },
-              { storeIn: Timeline.HistoricalPlanningElement.identifier,
-                readFrom: Timeline.PlanningElement.identifier }
-            );
+            Timeline.HistoricalPlanningElement.identifier + '_IDS_' + i,
+            { url : planningElementPrefix +
+                    '/planning_elements.json?ids=' +
+                    planningElementIdsOfPacket.join(',') },
+            { storeIn: Timeline.HistoricalPlanningElement.identifier,
+              readFrom: Timeline.PlanningElement.identifier }
+          );
         }
-        */
       });
     };
 
@@ -1178,22 +1209,6 @@ Timeline = {
         current_elements = elements.splice(0, Timeline.PROJECT_ID_BLOCK_SIZE);
 
         iter.call(this, current_elements, i);
-      }
-    };
-
-    TimelineLoader.prototype.comparisonCurrentUrlSuffix = function () {
-      if (this.options.current_time !== undefined) {
-        return "&at=" + this.options.current_time;
-      } else {
-        return "";
-      }
-    };
-
-    TimelineLoader.prototype.comparisonTargetUrlSuffix = function () {
-      if (this.options.target_time !== undefined ) {
-        return "&at=" + this.options.target_time;
-      } else {
-        return "";
       }
     };
 
@@ -1819,18 +1834,20 @@ Timeline = {
           dc = -1;
         }
 
-        if (!a.nameLower) {
-          a.nameLower = a.name.toLowerCase();
+        identifier_methods = [a, b].map(function(e) { return e.hasOwnProperty("subject") ? "subject" : "name" })
+
+        if (!a.identifierLower) {
+          a.identifierLower = a[identifier_methods[0]].toLowerCase();
         }
 
-        if (!b.nameLower) {
-          b.nameLower = b.name.toLowerCase();
+        if (!b.identifierLower) {
+          b.identifierLower = b[identifier_methods[1]].toLowerCase();
         }
 
-        if (a.nameLower < b.nameLower) {
+        if (a.identifierLower < b.identifierLower) {
           nc = -1;
         }
-        if (a.nameLower > b.nameLower) {
+        if (a.identifierLower > b.identifierLower) {
           nc = +1;
         }
 
@@ -2166,11 +2183,8 @@ Timeline = {
       return false;
     },
     filteredOut: function() {
-      var filtered = this.filteredOutForProjectFilter() ||
-                     this.filteredOutForResponsibles();
-
+      var filtered = this.filteredOutForProjectFilter();
       this.filteredOut = function() { return filtered; };
-
       return filtered;
     },
     inTimeFrame: function () {
@@ -2178,12 +2192,6 @@ Timeline = {
     },
     filteredOutForProjectFilter: function() {
       return this.project.filteredOut();
-    },
-    filteredOutForResponsibles: function() {
-      return Timeline.filterOutBasedOnArray(
-        this.timeline.options.planning_element_responsibles,
-        this.getResponsible()
-      );
     },
     all: function(timeline) {
       // collect all planning elements
@@ -2252,8 +2260,8 @@ Timeline = {
     start: function() {
       var pet = this.getPlanningElementType();
       //if we have got a milestone w/o a start date but with an end date, just set them the same.
-      if (this.start_date === undefined && this.end_date !== undefined && pet && pet.is_milestone) {
-        this.start_date = this.end_date;
+      if (this.start_date === undefined && this.due_date !== undefined && pet && pet.is_milestone) {
+        this.start_date = this.due_date;
       }
       if (this.start_date_object === undefined && this.start_date !== undefined) {
         this.start_date_object = Date.parse(this.start_date);
@@ -2263,13 +2271,13 @@ Timeline = {
     end: function() {
       var pet = this.getPlanningElementType();
       //if we have got a milestone w/o a start date but with an end date, just set them the same.
-      if (this.end_date === undefined && this.start_date !== undefined && pet && pet.is_milestone) {
-        this.end_date = this.start_date;
+      if (this.due_date === undefined && this.start_date !== undefined && pet && pet.is_milestone) {
+        this.due_date = this.start_date;
       }
-      if (this.end_date_object=== undefined && this.end_date !== undefined) {
-        this.end_date_object = Date.parse(this.end_date);
+      if (this.due_date_object=== undefined && this.due_date !== undefined) {
+        this.due_date_object = Date.parse(this.due_date);
       }
-      return this.end_date_object;
+      return this.due_date_object;
     },
     alternate_start: function() {
       if (this.alternate_start_date_object === undefined) {
@@ -2278,19 +2286,19 @@ Timeline = {
       return this.alternate_start_date_object;
     },
     alternate_end: function() {
-      if (this.alternate_end_date_object=== undefined) {
-        this.alternate_end_date_object = Date.parse(this.alternate_end_date);
+      if (this.alternate_due_date_object=== undefined) {
+        this.alternate_due_date_object = Date.parse(this.alternate_due_date);
       }
-      return this.alternate_end_date_object;
+      return this.alternate_due_date_object;
     },
     getSubElements: function() {
       return this.getChildren();
     },
     hasAlternateDates: function() {
       return (this.alternate_start_date !== undefined &&
-              this.alternate_end_date !== undefined &&
+              this.alternate_due_date !== undefined &&
               (!(this.start_date === this.alternate_start_date &&
-                 this.end_date === this.alternate_end_date)) ||
+                 this.due_date === this.alternate_due_date)) ||
               this.is_deleted);
     },
     isDeleted: function() {
@@ -2299,7 +2307,7 @@ Timeline = {
     isNewlyAdded: function() {
       return (this.timeline.isComparing() &&
               this.alternate_start_date === undefined &&
-              this.alternate_end_date === undefined);
+              this.alternate_due_date === undefined);
     },
     getAlternateHorizontalBounds: function(scale, absolute_beginning, milestone) {
       return this.getHorizontalBoundsForDates(
@@ -2654,7 +2662,7 @@ Timeline = {
         if (!in_aggregation) {
 
           // text rendering in planning elements outside of aggregations
-          text = timeline.getMeasuredPathFromText(this.name);
+          text = timeline.getMeasuredPathFromText(this.subject);
 
           // if this is an expanded planning element w/ children, or if
           // the text would not fit:
@@ -2727,7 +2735,7 @@ Timeline = {
           // the other case is text rendering in planning elements inside
           // of aggregations:
 
-          text = timeline.getMeasuredPathFromText(this.name,
+          text = timeline.getMeasuredPathFromText(this.subject,
                      (label_space.w - Timeline.PE_TEXT_INSIDE_PADDING) / Timeline.PE_TEXT_SCALE);
           label = timeline.paper.path(text.path);
           captionElements.push(label);
@@ -3683,7 +3691,7 @@ Timeline = {
   getAvailableRows: function() {
     var timeline = this;
     return {
-      all: ['end_date', 'planning_element_types', 'project_status', 'project_type', 'responsible', 'start_date'],
+      all: ['due_date', 'type', 'status', 'responsible', 'start_date'],
       type: function (data, pet, pt) {
         var ptName, petName;
         if (pt !== undefined) {
@@ -3700,8 +3708,13 @@ Timeline = {
 
         return jQuery('<span class="tl-column">' + (ptName || petName || "-") + '</span>');
       },
-      project_status: function(data) {
+      status: function(data) {
         var status;
+
+        if (data.planning_element_status) {
+          status = data.planning_element_status;
+        }
+
         if (data.getProjectStatus instanceof Function) {
           status = data.getProjectStatus();
         }
@@ -3737,20 +3750,20 @@ Timeline = {
           return jQuery(result);
         }
       },
-      end_date: function(data) {
+      due_date: function(data) {
         var kind, result = '';
-        if (data.end_date !== undefined) {
-          if (data.alternate_end_date !== undefined && data.end_date !== data.alternate_end_date) {
-            kind = (data.alternate_end_date < data.end_date? 'postponed' : 'preponed');
+        if (data.due_date !== undefined) {
+          if (data.alternate_due_date !== undefined && data.due_date !== data.alternate_due_date) {
+            kind = (data.alternate_due_date < data.due_date? 'postponed' : 'preponed');
             result += '<span class="tl-historical">';
-            result += timeline.escape(data.alternate_end_date);
+            result += timeline.escape(data.alternate_due_date);
             result += '<a href="javascript://" title="%t" class="%c"/>'
               .replace(/%t/, timeline.i18n('timelines.change'))
               .replace(/%c/, 'icon tl-icon-' + kind);
             result += '</span><br/>';
           }
           result += '<span class="tl-column tl-current tl-' + kind + '">' +
-                    timeline.escape(data.end_date) + '</span>';
+                    timeline.escape(data.due_date) + '</span>';
           return jQuery(result);
         }
       }
@@ -4270,9 +4283,9 @@ Timeline = {
 
       cell.append(contentWrapper);
 
-      text = timeline.escape(data.name);
+      text = timeline.escape(data.subject || data.name);
       if (data.getUrl instanceof Function) {
-        text = jQuery('<a href="' + data.getUrl() + '" class="tl-discreet-link" target="_blank" data-modal/>').append(text).attr("title", text);
+        text = jQuery('<a href="' + data.getUrl() + '" class="tl-discreet-link" data-modal/>').append(text).attr("title", text);
       }
 
       if (data.is(Timeline.Project)) {
@@ -4857,9 +4870,9 @@ Timeline = {
     }
     info += "<br/>";
     info += this.escape(renderable.start_date);
-    if (renderable.end_date !== renderable.start_date) {
+    if (renderable.due_date !== renderable.start_date) {
       // only have a second date if it is different.
-      info += "–" + this.escape(renderable.end_date);
+      info += " – " + this.escape(renderable.due_date);
     }
     info += "<br/>";
     if (r && r.name) { // if there is a responsible, show the name.
@@ -4872,9 +4885,9 @@ Timeline = {
     var left = offset.left;
     left -= chart.scrollLeft();
     left += bbox.x;
-    if (renderable.start_date && renderable.end_date) {
+    if (renderable.start_date && renderable.due_date) {
       left += bbox.width / 2;
-    } else if (renderable.end_date) {
+    } else if (renderable.due_date) {
       left += bbox.width - Timeline.HOVER_THRESHOLD;
     } else {
       left += Timeline.HOVER_THRESHOLD;
@@ -4895,9 +4908,9 @@ Timeline = {
     var margin = offset.left;
     margin -= chart.scrollLeft();
     margin += (bbox.x);
-    if (renderable.start_date && renderable.end_date) {
+    if (renderable.start_date && renderable.due_date) {
       margin += bbox.width / 2;
-    } else if (renderable.end_date) {
+    } else if (renderable.due_date) {
       margin += bbox.width - Timeline.HOVER_THRESHOLD;
     } else {
       margin += Timeline.HOVER_THRESHOLD;

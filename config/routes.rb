@@ -33,6 +33,7 @@ OpenProject::Application.routes.draw do
   scope :controller => 'account' do
     get '/account/force_password_change', :action => 'force_password_change'
     post '/account/change_password', :action => 'change_password'
+    get '/account/lost_password', :action => 'lost_password'
     match '/login', :action => 'login',  :as => 'signin', :via => [:get, :post]
     get '/logout', :action => 'logout', :as => 'signout'
   end
@@ -58,7 +59,11 @@ OpenProject::Application.routes.draw do
 
       resources :authentication
       resources :planning_element_journals
-      resources :planning_element_statuses
+      resources :statuses do
+        collection do
+          get :paginate_statuses
+        end
+      end
       resources :colors, :controller => 'planning_element_type_colors'
       resources :planning_element_types do
         collection do
@@ -208,13 +213,6 @@ OpenProject::Application.routes.draw do
     # work as a catchall for everything under /wiki
     get 'wiki' => "wiki#show"
 
-    resources :issues, :only => [] do
-      collection do
-        match '/report/:detail' => 'issues/reports#report_details', :via => :get
-        match '/report' => 'issues/reports#report', :via => :get
-      end
-    end
-
     namespace :work_packages do
       resources :calendar, :controller => 'calendars', :only => [:index]
     end
@@ -222,13 +220,18 @@ OpenProject::Application.routes.draw do
     resources :work_packages, :only => [:new, :create, :index] do
       get :new_type, :on => :collection
       put :preview, :on => :collection
+
+      collection do
+        match '/report/:detail' => 'work_packages/reports#report_details', :via => :get
+        match '/report' => 'work_packages/reports#report', :via => :get
+      end
     end
 
     resources :activity, :activities, :only => :index, :controller => 'activities'
 
     resources :boards
 
-    resources :issue_categories, :except => [:index, :show], :shallow => true
+    resources :categories, :except => [:index, :show], :shallow => true
 
     resources :members, :only => [:create, :update, :destroy], :shallow => true do
       get :autocomplete, :on => :collection
@@ -287,16 +290,17 @@ OpenProject::Application.routes.draw do
     resources :time_entries, :controller => 'timelog'
 
     resources :relations, :controller => 'relations', :only => [:create, :destroy]
-
-    collection do
-      get :bulk_edit, :format => false
-      put :bulk_update, :format => false
-    end
   end
 
   namespace :work_packages do
     match 'auto_complete' => 'auto_completes#index', :via => [:get, :post], :format => false
+    match 'context_menu' => 'context_menus#index', :via => [:get, :post], :format => false
     resources :calendar, :controller => 'calendars', :only => [:index]
+  end
+
+  namespace :work_package_bulk do
+    get :edit, :format => false
+    put :update, :format => false
   end
 
   resources :work_packages, :only => [:show, :edit, :update, :index] do

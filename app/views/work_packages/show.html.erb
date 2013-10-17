@@ -28,6 +28,7 @@ See doc/COPYRIGHT.rdoc for more details.
 ++#%>
 
 <%= header_tags %>
+<%= javascript_include_tag("work_packages.js") %>
 <%= render :partial => 'work_packages/action_menu', :locals => { work_package: work_package } %>
 
 <% work_package_breadcrumb %>
@@ -46,8 +47,6 @@ See doc/COPYRIGHT.rdoc for more details.
     <% end %>
   </p>
 
-  <hr />
-
   <div class="issue details">
     <div class="meta">
       <table class="attributes">
@@ -62,14 +61,13 @@ See doc/COPYRIGHT.rdoc for more details.
         <% end %>
 
         <%= render_custom_fields_rows(work_package) %>
-        <%= call_hook(:view_issues_show_details_bottom, :issue => work_package) %>
+        <%= call_hook(:view_work_packages_show_details_bottom, :issue => work_package) %>
       </table>
     </div>
   </div>
-
   <% if work_package.description? %>
-    <div class="description">
-      <hr />
+    <hr />
+    <div class="description work_package_part">
       <div class="contextual">
         <%= link_to_if_authorized(l(:button_quote), { controller: :work_packages, action: :quoted, id: work_package }, :class => 'quote-link icon icon-comment') %>
       </div>
@@ -77,7 +75,6 @@ See doc/COPYRIGHT.rdoc for more details.
       <div class="wiki wikicontent" data-user="<%= work_package.author %>">
         <%= textilizable work_package, :description, :attachments => work_package.attachments %>
       </div>
-      <hr />
     </div>
   <% end %>
 
@@ -85,17 +82,15 @@ See doc/COPYRIGHT.rdoc for more details.
     <%= link_to_attachments work_package %>
   <% end -%>
 
-  <%= call_hook(:view_issues_show_description_bottom, :issue => work_package) %>
+  <%= call_hook(:view_work_packages_show_description_bottom, :issue => work_package) %>
 
-  <hr />
 
   <%= render :partial => 'subwork_packages_paragraph', :locals => { :work_package => work_package,
                                                                     :ancestors => ancestors,
                                                                     :descendants => descendants } %>
 
   <% if authorize_for('work_package_relations', 'create') || relations.present? %>
-    <div id="relations">
-    <hr />
+    <div id="relations" class="work_package_part">
     <%= render :partial => 'relations', :locals => { :work_package => work_package,
                                                      :relations => relations } %>
     </div>
@@ -103,8 +98,7 @@ See doc/COPYRIGHT.rdoc for more details.
 
   <% if User.current.allowed_to?(:add_work_package_watchers, project) ||
     (work_package.watchers.present? && User.current.allowed_to?(:view_work_package_watchers, project)) %>
-    <div id="watchers">
-      <hr />
+    <div id="watchers" class="work_package_part">
       <%= render :partial => 'watchers/watchers', :locals => {:watched => work_package} %>
     </div>
   <% end %>
@@ -154,7 +148,7 @@ See doc/COPYRIGHT.rdoc for more details.
   <%= stylesheet_link_tag 'context_menu_rtl' if l(:direction) == 'rtl' %>
 <% end %>
 <div id="context-menu" style="display: none;"></div>
-<%= javascript_tag "new ContextMenu('#{issues_context_menu_path}')" %>
+<%= javascript_tag "new ContextMenu('#{work_packages_context_menu_path}')" %>
 
 <% #include calendar js files in case they are needed for edit
   include_calendar_headers_tags -%>

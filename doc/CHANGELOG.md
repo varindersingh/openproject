@@ -29,6 +29,62 @@ See doc/COPYRIGHT.rdoc for more details.
 
 # Changelog
 
+## 3.0.0pre22
+
+* `#1348` User status has no database index
+* `#1854` Breadcrumbs arrows missing in Chrome
+* `#1991` Migrate text references to issues/planning elements
+* `#2297` Fix APIv2 for planning elements
+* `#2304` Introduce keyboard shortcuts
+* `#2334` Deselecting all types in project configuration creates 500
+* `#2336` Cukes for timelines start/end date comparison
+* `#2340` Develop migration mechanism for renamed plugins
+* `#2383` [Performance] planning_elements_controller still has an n+1-query for the responsible
+* `#2384` Replace bundles svg graph with gem
+* `#2386` Remove timelines_journals_helper
+* `#2418` Migrate to RABL
+* Allow using environment variables instead of configuration.yml
+
+## 3.0.0pre21
+
+* `#1281` I18n.js Not working correctly. Always returns English Translations
+* `#1758` Migrate functional-tests for issues into specs for work package
+* `#1771` Fixed bug: Refactor Types Project Settings into new Tab
+* `#1880` Re-introduce at-time scope
+* `#1881` Re-introduce project planning comparison in controller
+* `#1883` Extend at-time scope for status comparison
+* `#1884` Make status values available over API
+* `#1994` Integrational tests for work packages at_time (API)
+* `#2070` Settle copyright for images
+* `#2158` Work Package General Setting
+* `#2173` Adapt client-side to new server behavior
+* `#2306` Migrate issues controller tests
+* `#2307` Change icon of home button in header from OpenProjct icon to house icon
+* `#2310` Add proper indices to work_package
+* `#2319` Add a request-store to avoid redundant calls
+
+## 3.0.0pre20
+
+* `#1560` WorkPackage/update does not retain some fields when validations fail
+* `#1771` Refactor Types Project Settings into new Tab
+* `#1878` Project Plan Comparison(server-side implementation): api/v2 can now resolve historical data for work_packages
+* `#1929` Too many lines in work package view
+* `#1946` Modal shown within in Modal
+* `#1949` External links within modals do not work
+* `#1992` Prepare schema migrations table
+* `#2125` All AJAX actions on work package not working after update
+* `#2237` Migrate reports controller tests
+* `#2246` Migrate issue categories controller tests
+* `#2262` Migrate issue statuses controller tests
+* `#2267` Rename view issue hooks
+
+## 3.0.0pre19
+
+* `#2055` More dynamic attribute determination for journals for extending journals by plugins
+* `#2203` Use server-side responsible filter
+* `#2204` Implement server-side status filter.
+* `#2218` Migrate context menus controller tests
+
 ## 3.0.0pre18
 
 * `#1715` Group assigned work packages
@@ -81,10 +137,9 @@ See doc/COPYRIGHT.rdoc for more details.
 
 ## 3.0.0pre15
 
-* `#1557` Timeline Report Selection Not Visible
-* `#1911` Change mouse icon when hovering over drag&drop-enabled select2 entries
 * `#1301` Ajax call when logged out should open a popup window
 * `#1351` Generalize Modal Creation
+* `#1557` Timeline Report Selection Not Visible
 * `#1755` Migrate helper-tests for issues into specs for work package
 * `#1766` Fixed bug: Viewing diff of Work Package description results in error 500
 * `#1767` Fixed bug: Viewing changesets results in "page not found"
@@ -94,6 +149,7 @@ See doc/COPYRIGHT.rdoc for more details.
 * `#1875` Added test steps to reuse steps for my page, my project page, and documents, no my page block lookup at class load time
 * `#1876` Timelines do not show work packages when there is no status reporting
 * `#1896` Moved visibility-tests for issues into specs for workpackages
+* `#1911` Change mouse icon when hovering over drag&drop-enabled select2 entries
 * `#1912` Merge column project type with column planning element type
 * `#1918` Custom fields are not displayed when issue is created
 

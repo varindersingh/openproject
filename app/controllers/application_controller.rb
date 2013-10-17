@@ -129,9 +129,9 @@ class ApplicationController < ActionController::Base
     if session[:user_id]
       # existing session
       (User.active.find(session[:user_id], :include => [:memberships]) rescue nil)
-    elsif cookies[Redmine::Configuration['autologin_cookie_name']] && Setting.autologin?
+    elsif cookies[OpenProject::Configuration['autologin_cookie_name']] && Setting.autologin?
       # auto-login feature starts a new session
-      user = User.try_to_autologin(cookies[Redmine::Configuration['autologin_cookie_name']])
+      user = User.try_to_autologin(cookies[OpenProject::Configuration['autologin_cookie_name']])
       session[:user_id] = user.id if user
       user
     elsif params[:format] == 'atom' && params[:key] && accept_key_auth_actions.include?(params[:action])
@@ -369,7 +369,18 @@ class ApplicationController < ActionController::Base
     self._model_scope  = Array(options[:scope]) if options[:scope]
   end
 
-  # Filter for bulk issue operations
+  # Filter for bulk work package operations
+  def find_work_packages
+    @work_packages = WorkPackage.includes(:project)
+                                .find_all_by_id(params[:work_package_id] || params[:ids])
+    raise ActiveRecord::RecordNotFound if @work_packages.empty?
+    @projects = @work_packages.collect(&:project).compact.uniq
+    @project = @projects.first if @projects.size == 1
+  rescue ActiveRecord::RecordNotFound
+    render_404
+  end
+
+  # TODO: remove this once all subclasses use find_work_packages
   def find_issues
     @issues = WorkPackage.find_all_by_id(params[:id] || params[:ids])
     raise ActiveRecord::RecordNotFound if @issues.empty?
@@ -558,21 +569,6 @@ class ApplicationController < ActionController::Base
   # Renders a warning flash if obj has unsaved attachments
   def render_attachment_warning_if_needed(obj)
     flash[:warning] = l(:warning_attachments_not_saved, obj.unsaved_attachments.size) if obj.unsaved_attachments.present?
-  end
-
-  # Sets the `flash` notice or error based the number of issues that did not save
-  #
-  # @param [Array, Issue] issues all of the saved and unsaved Issues
-  # @param [Array, Integer] unsaved_issue_ids the issue ids that were not saved
-  def set_flash_from_bulk_issue_save(issues, unsaved_issue_ids)
-    if unsaved_issue_ids.empty?
-      flash[:notice] = l(:notice_successful_update) unless issues.empty?
-    else
-      flash[:error] = l(:notice_failed_to_save_work_packages,
-                        :count => unsaved_issue_ids.size,
-                        :total => issues.size,
-                        :ids => '#' + unsaved_issue_ids.join(', #'))
-    end
   end
 
   # Rescues an invalid query statement. Just in case...
