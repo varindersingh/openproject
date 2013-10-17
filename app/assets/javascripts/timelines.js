@@ -456,14 +456,16 @@ Timeline = {
 
     FilterQueryStringBuilder.prototype.buildFilterDataForKeyAndArrayOfValues = function(key, value) {
       jQuery.each(value, jQuery.proxy( function(i, e) {
-         this.buildFilterDataForKeyAndValue(key, e)
+         this.buildFilterDataForKeyAndValue(key, e);
       }, this));
     };
 
     FilterQueryStringBuilder.prototype.buildFilterDataForValue = function(key, value) {
-      value instanceof Array ?
-        this.buildFilterDataForKeyAndArrayOfValues(key, value) :
+      if (value instanceof Array) {
+        this.buildFilterDataForKeyAndArrayOfValues(key, value);
+      } else {
         this.buildFilterDataForKeyAndValue(key, value);
+      }
     };
 
     FilterQueryStringBuilder.prototype.registerKeyAndValue = function(key, value) {
@@ -474,7 +476,7 @@ Timeline = {
     FilterQueryStringBuilder.prototype.buildQueryStringParts = function() {
       this.queryStringParts = [];
       jQuery.each(this.filterHash, jQuery.proxy(this.registerKeyAndValue, this));
-    }
+    };
 
     FilterQueryStringBuilder.prototype.buildQueryStringFromQueryStringParts = function(url) {
       return jQuery.map(this.queryStringParts, function(e, i) {
@@ -746,8 +748,8 @@ Timeline = {
     };
 
     DataEnhancer.prototype.setElement = function (type, id, element) {
-      /* jshint boss: true */
-      return this.data[type.identifier][id] = element;
+      this.data[type.identifier][id] = element;
+      return this.data[type.identifier][id];
     };
 
     DataEnhancer.prototype.getProject = function () {
@@ -1093,7 +1095,7 @@ Timeline = {
       } else {
         return {};
       }
-    }
+    };
 
     TimelineLoader.prototype.registerPlanningElements = function (ids) {
 
@@ -1776,15 +1778,15 @@ Timeline = {
           var dataBGrouping = b.getFirstLevelGroupingData();
 
           // order first level grouping.
-          if (dataAGrouping.id != dataBGrouping.id) {
+          if (parseInt(dataAGrouping.id, 10) !== dataBGrouping.id) {
             /** other is always at bottom */
-            if (dataAGrouping.id == 0) {
+            if (parseInt(dataAGrouping.id, 10) === 0) {
               return 1;
-            } else if (dataBGrouping.id == 0) {
+            } else if (parseInt(dataBGrouping.id, 10) === 0) {
               return -1;
             }
 
-            if (timeline.options.grouping_one_sort == 1) {
+            if (parseInt(timeline.options.grouping_one_sort, 10) === 1) {
               ag = dataAGrouping.number;
               bg = dataBGrouping.number;
             } else {
@@ -1833,7 +1835,7 @@ Timeline = {
         }
 
         if (a.hasSecondLevelGroupingAdjustment && b.hasSecondLevelGroupingAdjustment) {
-          if (timeline.options.grouping_two_sort == 1) {
+          if (parseInt(timeline.options.grouping_two_sort, 10) === 1) {
             if (dc !== 0) {
               return dc;
             }
@@ -1841,7 +1843,7 @@ Timeline = {
             if (nc !== 0) {
               return nc;
             }
-          } else if (timeline.options.grouping_two_sort == 2) {
+          } else if (parseInt(timeline.options.grouping_two_sort, 10) === 2) {
             if (nc !== 0) {
               return nc;
             }
@@ -1852,7 +1854,7 @@ Timeline = {
           }
         }
 
-        if (timeline.options.project_sort == 1 && a.is(Timeline.Project) && b.is(Timeline.Project)) {
+        if (parseInt(timeline.options.project_sort, 10) === 1 && a.is(Timeline.Project) && b.is(Timeline.Project)) {
           if (nc !== 0) {
             return nc;
           }
@@ -3088,13 +3090,13 @@ Timeline = {
       return this;
     },
     appendChild: function(node) {
-      /* jshint boss: true */
       if (!this.childNodes) {
         this.childNodes = [node];
       } else {
         this.childNodes.push(node);
       }
-      return node.parentNode = this;
+      node.parentNode = this;
+      return node.parentNode;
     },
     removeChild: function(node) {
       var result;
@@ -3122,8 +3124,8 @@ Timeline = {
       return this.expanded;
     },
     setExpand: function(state) {
-      /* jshint boss: true */
-      return this.expanded = state;
+      this.expanded = state;
+      return this.expanded;
     },
     expand: function() {
       return this.setExpand(true);
