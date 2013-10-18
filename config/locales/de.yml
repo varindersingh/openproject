@@ -543,8 +543,6 @@ de:
       create_planning_select_project: "Projekt:"
       due_date: "Abschlussdatum"
       error: "Ein Fehler ist aufgetreten."
-      filter:
-        none: "(keines)"
       name: "Name"
       project_status: "Projekt-Status"
       project_type: "Projekt-Typ"
@@ -552,6 +550,8 @@ de:
       save: "Speichern"
       start_date: "Startdatum"
       really_close_dialog: "Dialog schließen und eingegebene Daten verwerfen?"
+    filter:
+      none: "(keines)"
 
   label_account: "Konto"
   label_activity: "Aktivität"
